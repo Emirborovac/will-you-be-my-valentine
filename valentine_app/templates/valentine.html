@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine?</title>
+
+    <style>
+        @font-face {
+            font-family: "MyCustomFont";
+            src: url("{% static 'fonts/CuteLove-8M7J0.ttf' %}") format("woff2"),
+            url("{% static 'fonts/CuteLove-8M7J0.ttf' %}") format("truetype");
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-size: 50px;
+            text-align: center;
+            background-color: #ffebf3;
+            font-family: "MyCustomFont", Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            margin-top: 20vh;
+        }
+
+        h1 {
+            font-size: 55px;
+            font-weight: bold;
+            color: #ff1493;
+            /* Beautiful deep pink */
+            text-shadow: 2px 2px 5px rgba(255, 20, 147, 0.5);
+        }
+
+        button {
+            font-size: 20px;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+            transition: 0.3s;
+        }
+
+        #yesBtn {
+            background-color: #ff4da6;
+            color: white;
+        }
+
+        #noBtn {
+            background-color: #444;
+            color: white;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+        }
+
+        #message {
+            font-size: 30px;
+            font-weight: bold;
+            color: red;
+            margin-top: 20px;
+            display: none;
+            animation: fadeOut 2s ease-in-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                display: none;
+            }
+        }
+
+        #hearts-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .falling-item {
+            position: absolute;
+            font-size: 30px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-10vh);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <audio id="bgMusic" loop muted>
+        <source src="{% static 'careless.mp3' %}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div class="container">
+        <h1>Will You Be My Valentine? 💖</h1>
+        <div class="buttons">
+            <button id="yesBtn" onclick="startHearts()">Yes 💘</button>
+            <button id="noBtn" onclick="startBrokenHearts()">No 💔</button>
+        </div>
+        <div id="message">❌ Wrong answer! Try again ❌</div>
+    </div>
+
+    <div id="hearts-container"></div>
+
+    <script>
+        const music = document.getElementById("bgMusic");
+        let hasInteracted = false;
+        let fallingItems = [];
+        let heartInterval, brokenHeartInterval;
+
+        // Try to start music immediately (muted)
+        window.addEventListener('load', function () {
+            music.play().then(() => {
+                music.muted = false;
+            }).catch(error => {
+                console.log("Autoplay failed, waiting for interaction");
+            });
+        });
+
+        // Start music when user interacts
+        document.addEventListener('click', function startAudio() {
+            if (!hasInteracted) {
+                music.muted = false;
+                music.play().then(() => {
+                    hasInteracted = true;
+                    document.removeEventListener('click', startAudio);
+                }).catch(error => {
+                    console.log("Play failed:", error);
+                });
+            }
+        }, { once: true });
+
+        document.addEventListener('mousemove', function startAudio() {
+            if (!hasInteracted) {
+                music.muted = false;
+                music.play().then(() => {
+                    hasInteracted = true;
+                    document.removeEventListener('mousemove', startAudio);
+                }).catch(error => {
+                    console.log("Play failed:", error);
+                });
+            }
+        }, { once: true });
+
+        function createFallingItem(type) {
+            const item = document.createElement("div");
+            item.classList.add("falling-item");
+
+            if (type === "broken") {
+                item.innerHTML = "💔";
+            } else if (type === "heart") {
+                item.innerHTML = "💖";
+            } else if (type === "loveText") {
+                item.innerHTML = `<span style="font-size: 20px; color: #ff1493;">I love you 💕</span>`;
+            }
+
+            item.style.left = Math.random() * 100 + "vw";
+            item.style.animationDuration = Math.random() * 2 + 3 + "s";
+            document.getElementById("hearts-container").appendChild(item);
+            fallingItems.push(item);
+
+            setTimeout(() => {
+                item.remove();
+                fallingItems = fallingItems.filter(i => i !== item);
+            }, 5000);
+        }
+
+        function startHearts() {
+            // Stop broken hearts
+            clearInterval(brokenHeartInterval);
+            removeBrokenHearts();
+
+            // Start hearts and "I love you"
+            heartInterval = setInterval(() => createFallingItem("heart"), 300);
+            setInterval(() => createFallingItem("loveText"), 1500);
+        }
+
+        function startBrokenHearts() {
+            let message = document.getElementById("message");
+            message.style.display = "block";
+            setTimeout(() => {
+                message.style.display = "none"; // Hide message after 2 seconds
+            }, 2000);
+
+            brokenHeartInterval = setInterval(() => createFallingItem("broken"), 300);
+        }
+
+        function removeBrokenHearts() {
+            fallingItems.forEach(item => {
+                if (item.innerHTML === "💔") {
+                    item.remove();
+                }
+            });
+            fallingItems = fallingItems.filter(item => item.innerHTML !== "💔");
+        }
+    </script>
+
+</body>
+
+</html>
